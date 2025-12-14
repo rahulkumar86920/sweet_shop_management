@@ -7,16 +7,21 @@ const api = axios.create({
 });
 
 // Add token to requests if exists
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+
+    if (error.response?.status === 401 && !isLoginRequest) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
+
+    return Promise.reject(error);
+  }
 );
+
 
 // Response interceptor for handling errors
 api.interceptors.response.use(
